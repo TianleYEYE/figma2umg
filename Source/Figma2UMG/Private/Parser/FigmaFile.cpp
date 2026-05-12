@@ -1,5 +1,4 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "Parser/FigmaFile.h"
@@ -7,15 +6,15 @@
 #include "Figma2UMGModule.h"
 #include "Async/Async.h"
 #include "Builder/Asset/WidgetBlueprintBuilder.h"
-#include "Parser/Nodes/FigmaDocument.h"
-#include "Parser/Nodes/FigmaInstance.h"
+#include "Nodes/FigmaDocument.h"
+#include "Nodes/FigmaInstance.h"
 #include "REST/FigmaImporter.h"
-#include "Parser/Properties/FigmaComponentRef.h"
+#include "Properties/FigmaComponentRef.h"
 #include "Dom/JsonObject.h"
 
 void UFigmaFile::PostSerialize(const FString& InFileKey, const FString& InPackagePath, const TSharedRef<FJsonObject> fileJsonObject)
 {
-	static FString DocumentStr("Document");
+	static FString DocumentStr("document");
 	FileKey = InFileKey;
 	PackagePath = InPackagePath;
 	if(Document)
@@ -479,4 +478,3 @@ bool UFigmaFile::CreateAssetBuilder(const FString& InFileKey, UFigmaNode& Node, 
 
 	return Created;
 }
-

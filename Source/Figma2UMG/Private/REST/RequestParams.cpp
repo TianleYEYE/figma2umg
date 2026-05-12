@@ -1,5 +1,4 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "REST/RequestParams.h"
@@ -23,6 +22,7 @@ URequestParams::URequestParams(const FObjectInitializer& ObjectInitializer)
 		WidgetOverrides = Settings->WidgetOverrides;
 		SaveAllAtEnd = Settings->SaveAllAtEnd;
 		MaxURLImageRequest = Settings->MaxURLImageRequest;
+		RequestDelaySeconds = Settings->RequestDelaySeconds;
 		NodeImageScale = Settings->NodeImageScale;
 		ContentRootFolder = Settings->ContentRootFolder;
 	}

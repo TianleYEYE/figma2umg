@@ -1,5 +1,4 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 #include "UI/Figma2UMGStyle.h"
 
 #include "Brushes/SlateImageBrush.h"

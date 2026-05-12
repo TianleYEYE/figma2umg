@@ -1,10 +1,9 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "Parser/Nodes/FigmaGroup.h"
 
-#include "Parser/Nodes/FigmaComponentSet.h"
+#include "FigmaComponentSet.h"
 #include "Builder/Asset/MaterialBuilder.h"
 #include "Builder/Widget/BorderWidgetBuilder.h"
 #include "Builder/Widget/ButtonWidgetBuilder.h"

@@ -1,0 +1,84 @@
+// Copyright 2024 Buvi Games. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "FigmaBlendMode.h"
+#include "FigmaColor.h"
+#include "FigmaColorStop.h"
+#include "FigmaEnums.h"
+#include "FigmaImageFilters.h"
+#include "FigmaTransform.h"
+#include "FigmaVariableAlias.h"
+#include "FigmaVector.h"
+
+#include "FigmaPaint.generated.h"
+
+
+class UFigmaNode;
+class IAssetBuilder;
+
+USTRUCT()
+struct FIGMA2UMG_API FFigmaPaint
+{
+public:
+	GENERATED_BODY()
+
+	void PostSerialize(const TSharedPtr<FJsonObject> JsonObj);
+
+	FLinearColor GetLinearColor() const
+	{
+		return Color.ToLinearColor(Opacity);
+	}
+
+	void CreateAssetBuilder(const FString& InFileKey, const UFigmaNode* OwnerNode, TArray<TScriptInterface<IAssetBuilder>>& AssetBuilders, bool IsStroke = false);
+	TObjectPtr<UTexture2D> GetTexture() const;
+	TObjectPtr<UMaterialInterface> GetMaterial() const;
+
+	UPROPERTY()
+	EPaintTypes Type = EPaintTypes::SOLID;
+
+	UPROPERTY()
+	bool Visible = true;
+
+	UPROPERTY()
+	float Opacity = 1.0f;
+
+	UPROPERTY()
+	FFigmaColor Color;
+
+	UPROPERTY()
+	EFigmaBlendMode BlendMode = EFigmaBlendMode::PASS_THROUGH;
+
+	UPROPERTY()
+	TArray<FFigmaVector> GradientHandlePositions;
+
+	UPROPERTY()
+	TArray<FFigmaColorStop> GradientStops;
+
+	UPROPERTY()
+	EScaleMode ScaleMode = EScaleMode::FILL;
+
+	FFigmaTransform ImageTransform;
+
+	UPROPERTY()
+	float ScalingFactor = 1.0f;
+
+	UPROPERTY()
+	float Rotation = 0.0f;
+
+	UPROPERTY()
+	FString ImageRef;
+
+	UPROPERTY()
+	FFigmaImageFilters Filters;
+
+	UPROPERTY()
+	FString GifRef;
+
+	UPROPERTY()
+	TMap<FString, FFigmaVariableAlias> BoundVariables;
+
+protected:
+	TScriptInterface<IAssetBuilder> AssetBuilder = nullptr;
+};

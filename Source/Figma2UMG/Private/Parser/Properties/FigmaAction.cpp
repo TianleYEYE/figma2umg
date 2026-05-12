@@ -1,7 +1,6 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
-#include "Parser/Properties/FigmaAction.h"
+#include "FigmaAction.h"
 
 #include "Figma2UMGModule.h"
 #include "JsonObjectConverter.h"

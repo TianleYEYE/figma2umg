@@ -1,11 +1,10 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
-#include "Parser/Properties/FigmaInteraction.h"
+#include "FigmaInteraction.h"
 
+#include "FigmaAction.h"
+#include "FigmaTrigger.h"
 #include "Dom/JsonObject.h"
-#include "Parser/Properties/FigmaAction.h"
-#include "Parser/Properties/FigmaTrigger.h"
 #include "Serialization/JsonTypes.h"
 
 FFigmaInteraction FFigmaInteraction::Invalid = FFigmaInteraction();

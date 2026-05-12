@@ -1,10 +1,9 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "Parser/Nodes/FigmaComponentSet.h"
 
-#include "Parser/Nodes/FigmaInstance.h"
+#include "FigmaInstance.h"
 #include "Builder/WidgetBlueprintHelper.h"
 #include "Builder/Asset/MaterialBuilder.h"
 #include "Builder/Asset/Texture2DBuilder.h"

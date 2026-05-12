@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Asset/MaterialBuilder.h"
+#include "MaterialBuilder.h"
 
 #include "AssetToolsModule.h"
 #include "Figma2UMGModule.h"
@@ -16,6 +15,8 @@
 #include "Materials/MaterialExpressionComponentMask.h"
 #include "Materials/MaterialExpressionConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
+#include "Materials/MaterialExpressionMultiply.h"
+#include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionSubtract.h"
 #include "Materials/MaterialExpressionTextureCoordinate.h"
 #include "Parser/FigmaFile.h"
@@ -543,10 +544,20 @@ UMaterialExpression* UMaterialBuilder::SetupGradientColorExpression(UMaterialExp
 		GradientLinearExpression->Description = Gradient;
 	}
 
-	if (GradientLinearExpression)
-	{
-		const FName InputPosition("InputPosition");
-		GradientLinearExpression->OutputType = CMOT_Float4;
+		if (GradientLinearExpression)
+		{
+			const auto ToFloat4String = [](const FFigmaColor& Color)
+			{
+				const FLinearColor LinearColor = Color.ToLinearColor();
+				return FString::Printf(TEXT("float4(%s, %s, %s, %s)"),
+					*FString::SanitizeFloat(LinearColor.R),
+					*FString::SanitizeFloat(LinearColor.G),
+					*FString::SanitizeFloat(LinearColor.B),
+					*FString::SanitizeFloat(LinearColor.A));
+			};
+
+			const FName InputPosition("InputPosition");
+			GradientLinearExpression->OutputType = CMOT_Float4;
 		if (GradientLinearExpression->Inputs.Num() == 0)
 		{
 			FCustomInput input;
@@ -563,17 +574,11 @@ UMaterialExpression* UMaterialBuilder::SetupGradientColorExpression(UMaterialExp
 			}
 		}
 
-		if(Paint->GradientStops.Num() == 2)
-		{
-			GradientLinearExpression->Code = "float4 Color1 = float4(" + FString::SanitizeFloat(Paint->GradientStops[0].Color.R);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[0].Color.G);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[0].Color.B);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[0].Color.A) + ");\n";
+			if(Paint->GradientStops.Num() == 2)
+			{
+				GradientLinearExpression->Code = "float4 Color1 = " + ToFloat4String(Paint->GradientStops[0].Color) + ";\n";
 
-			GradientLinearExpression->Code += "float4 Color2 = float4(" + FString::SanitizeFloat(Paint->GradientStops[1].Color.R);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[1].Color.G);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[1].Color.B);
-			GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[1].Color.A) + ");\n";
+				GradientLinearExpression->Code += "float4 Color2 = " + ToFloat4String(Paint->GradientStops[1].Color) + ";\n";
 
 			GradientLinearExpression->Code += "if (InputPosition <= " + FString::SanitizeFloat(Paint->GradientStops[0].Position) + ")\n{\n  return Color1;\n}\n";
 			GradientLinearExpression->Code += "else if (InputPosition >= " + FString::SanitizeFloat(Paint->GradientStops[1].Position) + ")\n{\n  return Color2;\n}\n";
@@ -602,15 +607,9 @@ UMaterialExpression* UMaterialBuilder::SetupGradientColorExpression(UMaterialExp
 					GradientLinearExpression->Code += "  Position = (InputPosition - " + FString::SanitizeFloat(Paint->GradientStops[i - 1].Position) + ") / (" + FString::SanitizeFloat(Paint->GradientStops[i].Position - Paint->GradientStops[i - 1].Position) + ");\n";
 				}
 
-				GradientLinearExpression->Code += "  Color1 = float4(" + FString::SanitizeFloat(Paint->GradientStops[i - 1].Color.R);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i - 1].Color.G);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i - 1].Color.B);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i - 1].Color.A) + ");\n";
+				GradientLinearExpression->Code += "  Color1 = " + ToFloat4String(Paint->GradientStops[i - 1].Color) + ";\n";
 
-				GradientLinearExpression->Code += "  Color2 = float4(" + FString::SanitizeFloat(Paint->GradientStops[i].Color.R);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i].Color.G);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i].Color.B);
-				GradientLinearExpression->Code += ", " + FString::SanitizeFloat(Paint->GradientStops[i].Color.A) + ");\n";
+				GradientLinearExpression->Code += "  Color2 = " + ToFloat4String(Paint->GradientStops[i].Color) + ";\n";
 
 				GradientLinearExpression->Code += "}\n";
 

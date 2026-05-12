@@ -1,6 +1,3 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -36,8 +33,11 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Figma2UMG|Options")
 	bool UsePrototypeFlow = true;
 
-	UPROPERTY(EditAnywhere, meta = (Category = "Figma2UMG|Options", ToolTip = "Maximun amount of Images requested per REST request.", ClampMin = "1", ClampMax = "30", UIMin = "1", UIMax = "30"))
+	UPROPERTY(EditAnywhere, meta = (Category = "Figma2UMG|Options", ToolTip = "Maximum amount of Images requested per REST request.", ClampMin = "1", ClampMax = "30", UIMin = "1", UIMax = "30"))
 	int MaxURLImageRequest = 20;
+
+	UPROPERTY(Config, EditAnywhere, meta = (Category = "Figma2UMG|Options", ToolTip = "Delay in seconds between image URL requests to avoid rate limiting.", ClampMin = "0.0", ClampMax = "30.0", UIMin = "0.0", UIMax = "30.0"))
+	float RequestDelaySeconds = 2.0f;
 
 	UPROPERTY(EditAnywhere, meta = (Category = "Figma2UMG|Options", ToolTip = "Scale for node images requested from Figma (between 0.01 and 4).", ClampMin = "0.1", ClampMax = "4.0", UIMin = "0.1", UIMax = "4.0"))
 	float NodeImageScale = 4.0f;

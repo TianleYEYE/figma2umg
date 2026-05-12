@@ -1,11 +1,10 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 #include "UI/Figma2UMGManager.h"
 
 #include "ContentBrowserDataMenuContexts.h"
-#include "UI/Figma2UMGStyle.h"
-#include "UI/SImporterWidget.h"
+#include "Figma2UMGStyle.h"
+#include "SImporterWidget.h"
 
 #define LOCTEXT_NAMESPACE "Figma2UMG"
 #define CONTENTBROWSER_MODULE_NAME TEXT("ContentBrowser")
@@ -29,13 +28,10 @@ void FFigma2UMGManager::Initialize()
 
 void FFigma2UMGManager::Shutdown()
 {
-	if (ImporterDockTab != nullptr && ImporterDockTab.IsValid())
-	{
-		ImporterDockTab->RequestCloseTab();
-	}
+	ImporterDockTab.Reset();
 
-	FFigma2UMGStyle::Shutdown();
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(ImporterTabName);
+	FFigma2UMGStyle::Shutdown();
 }
 
 void FFigma2UMGManager::SetupMenuItem()
@@ -83,7 +79,7 @@ void FFigma2UMGManager::CreateWindow()
 		float DesiredWidth = 1650;
 		float DesiredHeight = 900;
 	
-		if (DesiredWidth < MainWindowSize.X && DesiredHeight < MainWindowSize.Y && ImporterDockTab->GetParentWindow().IsValid())
+		if (DesiredWidth < MainWindowSize.X && DesiredHeight < MainWindowSize.Y && ImporterDockTab.IsValid() && ImporterDockTab->GetParentWindow().IsValid())
 		{
 			// If Bridge is docked as a tab, the parent window will be the main window
 			if (ImporterDockTab->GetParentWindow() == Windows[0])

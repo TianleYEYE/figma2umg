@@ -1,16 +1,15 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "REST/FigmaImporter.h"
 
-#include "REST/Defines.h"
+#include "Defines.h"
 #include "Figma2UMGModule.h"
 #include "FigmaImportSubsystem.h"
 #include "FileHelpers.h"
 #include "HttpModule.h"
 #include "JsonObjectConverter.h"
-#include "REST/RequestParams.h"
+#include "RequestParams.h"
 #include "Async/Async.h"
 #include "Builder/Asset/AssetBuilder.h"
 #include "Builder/Asset/FontBuilder.h"
@@ -62,6 +61,7 @@ void UFigmaImporter::Init(const TObjectPtr<URequestParams> InProperties, const F
 
 	MaxURLImageRequest = InProperties->MaxURLImageRequest;
 	NodeImageScale = InProperties->NodeImageScale;
+	RequestDelaySeconds = InProperties->RequestDelaySeconds;
 	ProgressOnFailToDownloadImage = InProperties->ProgressOnFailToDownloadImage;
 
 	DownloadFontsFromGoogle = InProperties->DownloadFontsFromGoogle;
@@ -137,6 +137,18 @@ bool UFigmaImporter::CreateRequest(const char* EndPoint, const FString& CurrentF
 
 	HttpRequest->OnProcessRequestComplete() = HttpRequestCompleteDelegate;
 
+	if (RequestDelaySeconds > 0.0f && LastRequestTime > 0.0)
+	{
+		const double Elapsed = FPlatformTime::Seconds() - LastRequestTime;
+		const double WaitTime = static_cast<double>(RequestDelaySeconds) - Elapsed;
+		if (WaitTime > 0.0)
+		{
+			UE_LOG_Figma2UMG(Display, TEXT("[Figma REST] Waiting %.1f seconds before next request to avoid rate limiting."), WaitTime);
+			FPlatformProcess::Sleep(WaitTime);
+		}
+	}
+	LastRequestTime = FPlatformTime::Seconds();
+
 	HttpRequest->ProcessRequest();
 
 
@@ -149,9 +161,7 @@ bool UFigmaImporter::CreateRequest(const char* EndPoint, const FString& CurrentF
 
 		int HeaderAddressOffset = 0;
 
-#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 6)
-		HeaderAddressOffset = 696;
-#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 5)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 5)
 		HeaderAddressOffset = 696;
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 4)
 		HeaderAddressOffset = 664;
@@ -295,6 +305,49 @@ TSharedPtr<FJsonObject> UFigmaImporter::ParseRequestReceived(FString MessagePref
 	return nullptr;
 }
 
+bool UFigmaImporter::IsRateLimitResponse(FHttpResponsePtr HttpResponse) const
+{
+	if (!HttpResponse.IsValid())
+	{
+		return false;
+	}
+
+	TSharedPtr<FJsonObject> JsonObj;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(HttpResponse->GetContentAsString());
+	if (!FJsonSerializer::Deserialize(Reader, JsonObj) || !JsonObj.IsValid())
+	{
+		return false;
+	}
+
+	static FString StatusStr("status");
+	static FString ErrorStr("err");
+	return JsonObj->HasField(StatusStr)
+		&& JsonObj->HasField(ErrorStr)
+		&& JsonObj->GetStringField(ErrorStr).Equals(TEXT("Rate limit exceeded"), ESearchCase::IgnoreCase);
+}
+
+bool UFigmaImporter::RetryRateLimitedRequest(const FString& MessagePrefix, int& RetryCount, TFunction<void()> RetryCallback)
+{
+	if (RetryCount >= MaxRateLimitRetries)
+	{
+		return false;
+	}
+
+	RetryCount++;
+	const float RetryDelaySeconds = FMath::Max(RequestDelaySeconds * 2.0f, 60.0f);
+	const FString Message = FString::Printf(TEXT("%sRate limit exceeded. Retrying %i/%i in %.1f seconds."), *MessagePrefix, RetryCount, MaxRateLimitRetries, RetryDelaySeconds);
+	UE_LOG_Figma2UMG(Warning, TEXT("%s"), *Message);
+	UpdateStatus(eRequestStatus::Processing, Message);
+
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [RetryDelaySeconds, RetryCallback]()
+	{
+		FPlatformProcess::Sleep(RetryDelaySeconds);
+		RetryCallback();
+	});
+
+	return true;
+}
+
 void UFigmaImporter::DownloadNextDependency()
 {
 	for (TPair<FString, TObjectPtr<UFigmaFile>> Lib : LibraryFileKeys)
@@ -322,10 +375,20 @@ void UFigmaImporter::OnFigmaLibraryFileRequestReceived(FHttpRequestPtr HttpReque
 {
 	MainProgress.Update(1.0f, NSLOCTEXT("Figma2UMG", "Figma2UMG_ParseLib", "Parsing Library File."));
 	;
+	if (IsRateLimitResponse(HttpResponse)
+		&& RetryRateLimitedRequest(TEXT("[Figma library file request] "), LibraryFileRequestRetryCount, [this]()
+		{
+			CreateRequest(FIGMA_ENDPOINT_FILES, CurrentLibraryFileKey, FString(), OnVaRestLibraryFileRequestDelegate);
+		}))
+	{
+		return;
+	}
+	LibraryFileRequestRetryCount = 0;
+
 	TSharedPtr<FJsonObject> JsonObj = ParseRequestReceived(TEXT("[Figma library file request] "), HttpResponse);
 	if (JsonObj.IsValid())
 	{
-		static FString NameStr("Name");
+		static FString NameStr("name");
 		const FString FigmaFilename = UPackageTools::SanitizePackageName(JsonObj->GetStringField(NameStr));
 		const FString FullFilename = FPaths::ProjectContentDir() + TEXT("../Downloads/") + FigmaFilename + TEXT("/") + FigmaFilename + TEXT(".figma");
 		const FString RawText = HttpResponse->GetContentAsString();
@@ -362,10 +425,20 @@ void UFigmaImporter::OnFigmaFileRequestReceived(FHttpRequestPtr HttpRequest, FHt
 {
 	MainProgress.Update(1.0f, NSLOCTEXT("Figma2UMG", "Figma2UMG_ParseFile", "Parsing Design File."));
 
+	if (IsRateLimitResponse(HttpResponse)
+		&& RetryRateLimitedRequest(TEXT("[Figma file request] "), FileRequestRetryCount, [this]()
+		{
+			CreateRequest(FIGMA_ENDPOINT_FILES, FileKey, Ids, OnVaRestFileRequestDelegate);
+		}))
+	{
+		return;
+	}
+	FileRequestRetryCount = 0;
+
 	TSharedPtr<FJsonObject> JsonObj = ParseRequestReceived(TEXT("[Figma file request] "), HttpResponse);
 	if (JsonObj.IsValid())
 	{
-		static FString NameStr("Name");
+		static FString NameStr("name");
 		const FString FigmaFilename = UPackageTools::SanitizePackageName(JsonObj->GetStringField(NameStr));
 		const FString FullFilename = FPaths::ProjectContentDir() + TEXT("../Downloads/") + FigmaFilename + TEXT("/") + FigmaFilename + TEXT(".figma");
 		const FString RawText = HttpResponse->GetContentAsString();
@@ -523,6 +596,8 @@ void UFigmaImporter::RequestImageURLs()
 				FString ImageIdsFormated;
 				FString ImageRef;
 				int RequestCount = 0;
+				PendingImageURLRequestFileKey = Requests->FileKey;
+				PendingImageURLRequestIds.Reset();
 				for (int i = 0; i < Requests->Requests.Num() && RequestCount < MaxURLImageRequest; i++)
 				{
 					if(!Requests->Requests[i].URL.IsEmpty())
@@ -540,6 +615,7 @@ void UFigmaImporter::RequestImageURLs()
 						ImageIdsFormated += "," + Requests->Requests[i].Id;
 					}
 					Requests->Requests[i].SetRequestedURL();
+					PendingImageURLRequestIds.Add(Requests->Requests[i].Id);
 					RequestCount++;
 				}
 
@@ -572,6 +648,29 @@ void UFigmaImporter::RequestImageURLs()
 
 void UFigmaImporter::OnFigmaImagesURLReceived(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded)
 {
+	if (HttpResponse.IsValid())
+	{
+		TSharedPtr<FJsonObject> ErrorObj;
+		TSharedRef<TJsonReader<>> ErrorReader = TJsonReaderFactory<>::Create(HttpResponse->GetContentAsString());
+		if (FJsonSerializer::Deserialize(ErrorReader, ErrorObj) && ErrorObj.IsValid())
+		{
+			static FString StatusStr("status");
+			static FString ErrorStr("err");
+			if (ErrorObj->HasField(StatusStr) && ErrorObj->HasField(ErrorStr) && ErrorObj->GetStringField(ErrorStr).Equals(TEXT("Rate limit exceeded"), ESearchCase::IgnoreCase))
+			{
+				RequestedImages.ResetRequestedURLs(PendingImageURLRequestFileKey, PendingImageURLRequestIds);
+				const float RetryDelaySeconds = FMath::Max(RequestDelaySeconds * 2.0f, 60.0f);
+				UE_LOG_Figma2UMG(Warning, TEXT("[Figma images request] Rate limit exceeded. Retrying %i image URL request(s) in %.1f seconds."), PendingImageURLRequestIds.Num(), RetryDelaySeconds);
+				AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, RetryDelaySeconds]()
+				{
+					FPlatformProcess::Sleep(RetryDelaySeconds);
+					RequestImageURLs();
+				});
+				return;
+			}
+		}
+	}
+
 	TSharedPtr<FJsonObject> JsonObj = ParseRequestReceived(TEXT("[Figma images request] "), HttpResponse);
 	if (JsonObj.IsValid())
 	{
@@ -1017,6 +1116,7 @@ void UFigmaImporter::SaveAll()
 	}
 #if (ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3)
 	FEditorFileUtils::FPromptForCheckoutAndSaveParams Params;
+	Params.bAlreadyCheckedOut = IsRunningCommandlet();
 	FEditorFileUtils::PromptForCheckoutAndSave(Packages, Params);
 #else
 	FEditorFileUtils::PromptForCheckoutAndSave(Packages, true, false);
@@ -1046,7 +1146,10 @@ void UFigmaImporter::OnPostPatchUAssets(bool Succeeded)
 void UFigmaImporter::ProgressBar::Start(float InAmountOfWork, const FText& InDefaultMessage)
 {
 	ProgressTask = new FScopedSlowTask(InAmountOfWork, InDefaultMessage);
-	ProgressTask->MakeDialog();
+	if (!IsRunningCommandlet())
+	{
+		ProgressTask->MakeDialog();
+	}
 }
 
 void UFigmaImporter::ProgressBar::Update(float ExpectedWorkThisFrame, const FText& Message)

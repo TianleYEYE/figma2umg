@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Widget/SingleChildBuilder.h"
+#include "SingleChildBuilder.h"
 
 #include "Figma2UMGModule.h"
 #include "Blueprint/WidgetTree.h"

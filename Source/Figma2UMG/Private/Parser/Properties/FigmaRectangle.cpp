@@ -1,7 +1,6 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
-#include "Parser/Properties/FigmaRectangle.h"
+#include "FigmaRectangle.h"
 
 FVector2D FFigmaRectangle::GetPosition(const float Rotation) const
 {

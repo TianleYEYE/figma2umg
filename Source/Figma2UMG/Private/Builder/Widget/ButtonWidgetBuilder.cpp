@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Widget/ButtonWidgetBuilder.h"
+#include "ButtonWidgetBuilder.h"
 
 #include "BlueprintDelegateNodeSpawner.h"
 #include "EdGraphSchema_K2_Actions.h"

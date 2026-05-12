@@ -12,6 +12,16 @@ Originally released on the Epic Marketplace, this plugin is now **open source an
 
 ---
 
+## Attribution and Local Iteration
+
+This fork is based on the original [Buvi-Games/figma2umg](https://github.com/Buvi-Games/figma2umg) repository by Buvi Games.
+
+The `local-ue57-figma-api-fixes` branch contains local iteration work for an Unreal Engine 5.7 project, including Marketplace-version source layout updates, Figma API response parsing fixes, commandlet-based import testing, import throttling/retry support, and unattended save/import adjustments.
+
+Original licensing and attribution are preserved under the MIT License.
+
+---
+
 ## ✨ Features
 
 - 📦 Convert Figma frames into UMG widgets

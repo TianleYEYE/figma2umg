@@ -1,5 +1,4 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
 #include "REST/ImageRequest.h"
@@ -12,6 +11,11 @@
 void FImageRequest::SetRequestedURL()
 {
 	RequestedURL = true;
+}
+
+void FImageRequest::ResetRequestedURL()
+{
+	RequestedURL = false;
 }
 
 bool FImageRequest::GetRequestedURL() const
@@ -150,6 +154,22 @@ void FImageRequests::SetURL(const FString& Id, const FString& URL)
 		if (FoundRequest)
 		{
 			FoundRequest->URL = URL;
+		}
+	}
+}
+
+void FImageRequests::ResetRequestedURLs(const FString& FileKey, const TArray<FString>& Ids)
+{
+	FImagePerFileRequests* FileRequest = RequestsPerFile.FindByPredicate([FileKey](const FImagePerFileRequests& Request) { return (Request.FileKey == FileKey); });
+	if (!FileRequest)
+		return;
+
+	for (const FString& Id : Ids)
+	{
+		FImageRequest* FoundRequest = FileRequest->Requests.FindByPredicate([Id](const FImageRequest& Request) { return (Request.Id == Id); });
+		if (FoundRequest && FoundRequest->URL.IsEmpty())
+		{
+			FoundRequest->ResetRequestedURL();
 		}
 	}
 }

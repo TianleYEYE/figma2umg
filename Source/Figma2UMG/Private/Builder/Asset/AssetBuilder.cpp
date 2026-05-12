@@ -1,7 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
-#include "Builder/Asset/AssetBuilder.h"
+
+#include "AssetBuilder.h"
 
 void IAssetBuilder::SetNode(const FString& InFileKey, const UFigmaNode* InNode)
 {

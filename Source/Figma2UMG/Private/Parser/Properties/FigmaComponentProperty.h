@@ -1,0 +1,22 @@
+// Copyright 2024 Buvi Games. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+
+#include "FigmaComponentPropertyDefinition.h"
+
+#include "FigmaComponentProperty.generated.h"
+
+USTRUCT()
+struct FIGMA2UMG_API FFigmaComponentProperty
+{
+public:
+	GENERATED_BODY()
+
+	UPROPERTY()
+	EFigmaComponentPropertyType Type = EFigmaComponentPropertyType::BOOLEAN;
+
+	UPROPERTY()
+	FString Value;
+};

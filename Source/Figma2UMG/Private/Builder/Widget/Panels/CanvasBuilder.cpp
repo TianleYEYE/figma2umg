@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Widget/Panels/CanvasBuilder.h"
+#include "CanvasBuilder.h"
 
 #include "Components/CanvasPanel.h"
 #include "Components/WidgetSwitcher.h"

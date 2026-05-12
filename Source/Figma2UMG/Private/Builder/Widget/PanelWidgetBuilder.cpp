@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Widget/PanelWidgetBuilder.h"
+#include "PanelWidgetBuilder.h"
 
 void UPanelWidgetBuilder::SetWidget(const TObjectPtr<UWidget>& InWidget)
 {

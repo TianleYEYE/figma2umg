@@ -1,8 +1,7 @@
-// MIT License
-// Copyright (c) 2024 Buvi Games
+// Copyright 2024 Buvi Games. All Rights Reserved.
 
 
-#include "Builder/Widget/Panels/HBoxBuilder.h"
+#include "HBoxBuilder.h"
 
 #include "Figma2UMGModule.h"
 #include "Parser/Nodes/FigmaGroup.h"
