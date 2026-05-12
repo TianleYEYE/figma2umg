@@ -859,8 +859,16 @@ void UFigmaImporter::OnFetchGoogleFontsResponse(FHttpRequestPtr HttpRequest, FHt
 	}
 	else
 	{
-		const TArray<uint8>& Content = HttpResponse.Get()->GetContent();
-		FString ErrorContent = BytesToString(Content.GetData(), Content.Num());
+		FString ErrorContent;
+		if (HttpResponse.IsValid())
+		{
+			const TArray<uint8>& Content = HttpResponse->GetContent();
+			ErrorContent = BytesToString(Content.GetData(), Content.Num());
+		}
+		else
+		{
+			ErrorContent = TEXT("No HTTP response received.");
+		}
 		UE_LOG_Figma2UMG(Warning, TEXT("[UFigmaImporter] Failed to Fetch Google Fonts's list. Response %s"), *ErrorContent);
 
 		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this]() {LoadOrCreateAssets(); });
