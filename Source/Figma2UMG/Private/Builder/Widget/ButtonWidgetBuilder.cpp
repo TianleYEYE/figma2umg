@@ -334,11 +334,13 @@ void UButtonWidgetBuilder::SetupBrush(FSlateBrush& Brush, const UFigmaGroup& Fig
 		Brush.TintColor = FLinearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	}
 
+	bool bUsesTexture = false;
 	for (const FFigmaPaint& Fill : FigmaGroup.Fills)
 	{
 		if (const TObjectPtr<UTexture2D> Texture = Fill.GetTexture())
 		{
 			Brush.SetResourceObject(Texture);
+			bUsesTexture = true;
 		}
 	}
 
@@ -358,7 +360,7 @@ void UButtonWidgetBuilder::SetupBrush(FSlateBrush& Brush, const UFigmaGroup& Fig
 																  : FVector4(FigmaGroup.CornerRadius, FigmaGroup.CornerRadius, FigmaGroup.CornerRadius, FigmaGroup.CornerRadius);
 	Brush.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
 	Brush.OutlineSettings.CornerRadii = Corners;
-	Brush.DrawAs = ESlateBrushDrawType::RoundedBox;
+	Brush.DrawAs = bUsesTexture ? ESlateBrushDrawType::Image : ESlateBrushDrawType::RoundedBox;
 }
 
 

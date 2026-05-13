@@ -393,6 +393,9 @@ void IWidgetBuilder::SetFill(const TArray<FFigmaPaint>& Fills) const
 			{
 				Border->SetBrushColor(FLinearColor::White);
 				Border->SetBrushFromTexture(Texture);
+				FSlateBrush Brush = Border->Background;
+				Brush.DrawAs = ESlateBrushDrawType::Image;
+				Border->SetBrush(Brush);
 			}
 			else
 			{

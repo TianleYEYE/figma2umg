@@ -141,7 +141,7 @@ void UImageWidgetBuilder::SetupFill() const
 		Widget->SetBrushFromTexture(Texture, false);
 		FSlateBrush Brush = Widget->GetBrush();
 		Brush.SetImageSize(Node->GetAbsoluteSize(IsTopWidgetForNode()));
-		Brush.DrawAs = GetDrawAs(Brush.DrawAs);
+		Brush.DrawAs = ESlateBrushDrawType::Image;
 		SetBrush(Widget, Brush);
 		Widget->SetColorAndOpacity(FLinearColor::White);
 	}
