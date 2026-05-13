@@ -22,7 +22,28 @@ FVector2D UFigmaRectangleVector::GetAbsoluteCenter() const
 
 bool UFigmaRectangleVector::CreateAssetBuilder(const FString& InFileKey, TArray<TScriptInterface<IAssetBuilder>>& AssetBuilders)
 {
-	if (!StrokeDashes.IsEmpty())
+	bool HasVisibleStroke = false;
+	for (const FFigmaPaint& Stroke : Strokes)
+	{
+		if (Stroke.Visible)
+		{
+			HasVisibleStroke = true;
+			break;
+		}
+	}
+
+	bool HasVisibleFill = false;
+	for (const FFigmaPaint& Fill : Fills)
+	{
+		if (Fill.Visible)
+		{
+			HasVisibleFill = true;
+			break;
+		}
+	}
+
+	const bool HasRoundedCorners = CornerRadius > 0.0f || !RectangleCornerRadii.IsEmpty();
+	if (!StrokeDashes.IsEmpty() || (HasVisibleStroke && !HasVisibleFill && HasRoundedCorners))
 	{
 		return Super::CreateAssetBuilder(InFileKey, AssetBuilders);
 	}

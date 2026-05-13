@@ -22,7 +22,7 @@ FVector2D UFigmaEllipse::GetAbsoluteCenter() const
 
 bool UFigmaEllipse::CreateAssetBuilder(const FString& InFileKey, TArray<TScriptInterface<IAssetBuilder>>& AssetBuilders)
 {
-	if (!StrokeDashes.IsEmpty() || (!Strokes.IsEmpty() && Fills.IsEmpty()))
+	if (!Strokes.IsEmpty())
 	{
 		return Super::CreateAssetBuilder(InFileKey, AssetBuilders);
 	}
